@@ -44,7 +44,7 @@ Name: %{?scl_prefix}boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.58.0
 %define version_enc 1_58_0
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: Boost and MIT and Python
 
 %define toplev_dirname boost_%{version_enc}
@@ -1067,16 +1067,16 @@ rm -rf $RPM_BUILD_ROOT
 
 %post doctools
 CATALOG=%{_sysconfdir}/xml/catalog
-%{_bindir}/xmlcatalog --noout --add "rewriteSystem" \
+%{_root_bindir}/xmlcatalog --noout --add "rewriteSystem" \
  "http://www.boost.org/tools/boostbook/dtd" \
  "file://%{_datadir}/boostbook/dtd" $CATALOG
-%{_bindir}/xmlcatalog --noout --add "rewriteURI" \
+%{_root_bindir}/xmlcatalog --noout --add "rewriteURI" \
  "http://www.boost.org/tools/boostbook/dtd" \
  "file://%{_datadir}/boostbook/dtd" $CATALOG
-%{_bindir}/xmlcatalog --noout --add "rewriteSystem" \
+%{_root_bindir}/xmlcatalog --noout --add "rewriteSystem" \
  "http://www.boost.org/tools/boostbook/xsl" \
  "file://%{_datadir}/boostbook/xsl" $CATALOG
-%{_bindir}/xmlcatalog --noout --add "rewriteURI" \
+%{_root_bindir}/xmlcatalog --noout --add "rewriteURI" \
  "http://www.boost.org/tools/boostbook/xsl" \
  "file://%{_datadir}/boostbook/xsl" $CATALOG
 
@@ -1084,9 +1084,9 @@ CATALOG=%{_sysconfdir}/xml/catalog
 # remove entries only on removal of package
 if [ "$1" = 0 ]; then
   CATALOG=%{_sysconfdir}/xml/catalog
-  %{_bindir}/xmlcatalog --noout --del \
+  %{_root_bindir}/xmlcatalog --noout --del \
     "file://%{_datadir}/boostbook/dtd" $CATALOG
-  %{_bindir}/xmlcatalog --noout --del \
+  %{_root_bindir}/xmlcatalog --noout --del \
     "file://%{_datadir}/boostbook/xsl" $CATALOG
 fi
 
@@ -1361,6 +1361,9 @@ fi
 %{_mandir}/man1/bjam.1*
 
 %changelog
+* Sun Feb 07 2016 Honza Horak <hhorak@redhat.com> - 1.58.0-13
+- Fixed postun xmlcatalog location
+
 * Sun Feb 07 2016 Honza Horak <hhorak@redhat.com> - 1.58.0-12
 - Convert to SCL package
 
