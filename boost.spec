@@ -44,7 +44,7 @@ Name: %{?scl_prefix}boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.58.0
 %define version_enc 1_58_0
-Release: 13%{?dist}
+Release: 16%{?dist}
 License: Boost and MIT and Python
 
 %define toplev_dirname boost_%{version_enc}
@@ -57,7 +57,7 @@ Source2: libboost_thread.so
 
 # Since Fedora 13, the Boost libraries are delivered with sonames
 # equal to the Boost version (e.g., 1.41.0).
-%define sonamever %{version}
+%define sonamever %{?scl_prefix}%{version}
 
 # boost is an "umbrella" package that pulls in all other boost
 # components, except for MPI and Python 3 sub-packages.  Those are
@@ -97,6 +97,7 @@ BuildRequires: python-devel
 BuildRequires: python3-devel
 %endif
 BuildRequires: libicu-devel
+BuildRequires: chrpath
 
 # https://svn.boost.org/trac/boost/ticket/6150
 Patch4: boost-1.50.0-fix-non-utf8-files.patch
@@ -463,10 +464,10 @@ Requires: libicu-devel%{?_isa}
 # Odeint was shipped in Fedora 18, but later became part of Boost.
 # Note we also obsolete odeint-doc down there.
 # https://bugzilla.redhat.com/show_bug.cgi?id=892850
-Provides: odeint = 2.2-5
-Obsoletes: odeint < 2.2-5
-Provides: odeint-devel = 2.2-5
-Obsoletes: odeint-devel < 2.2-5
+Provides: %{?scl_prefix}odeint = 2.2-5
+Obsoletes: %{?scl_prefix}odeint < 2.2-5
+Provides: %{?scl_prefix}odeint-devel = 2.2-5
+Obsoletes: %{?scl_prefix}odeint-devel < 2.2-5
 
 %description devel
 Headers and shared object symbolic links for the Boost C++ libraries.
@@ -492,8 +493,8 @@ Provides: %{name}-python-docs = %{version}-%{release}
 %{?scl:Requires:%scl_runtime}
 
 # See the description above.
-Provides: odeint-doc = 2.2-5
-Obsoletes: odeint-doc < 2.2-5
+Provides: %{?scl_prefix}odeint-doc = 2.2-5
+Obsoletes: %{?scl_prefix}odeint-doc < 2.2-5
 
 %description doc
 This package contains the documentation in the HTML format of the Boost C++
@@ -710,9 +711,6 @@ a number of significant features and is now developed independently
 : PYTHON3_ABIFLAGS=%{python3_abiflags}
 %endif
 
-#Put this towards the beginning, hopefully that is right.
-%{?scl_prefix:export verstring_prefix="%{scl_prefix}"}
-
 # There are many strict aliasing warnings, and it's not feasible to go
 # through them all at this time.
 export RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing"
@@ -733,6 +731,10 @@ using python : %{python3_version} : /usr/bin/python3 : /usr/include/python%{pyth
 EOF
 
 ./bootstrap.sh --with-toolset=gcc --with-icu
+
+# To prefix soname version with sclname
+# http://lists.boost.org/boost-build/2016/04/28603.php
+sed -i 's|.$(BOOST_VERSION)|.%{scl_prefix}$(BOOST_VERSION)|g' boostcpp.jam
 
 # N.B. When we build the following with PCH, parts of boost (math
 # library in particular) end up being built second time during
@@ -812,9 +814,6 @@ echo ============================= build Boost.Build ==================
 rm -rf $RPM_BUILD_ROOT
 cd %{_builddir}/%{toplev_dirname}
 
-#Put this towards the beginning, hopefully that is right.
-%{?scl_prefix:export verstring_prefix="%{scl_prefix}"}
-
 %if %{with openmpi} || %{with mpich}
 # First, purge all modules so that user environment doesn't conflict
 # with the build.
@@ -866,11 +865,22 @@ echo ============================= install serial ==================
 	variant=release threading=multi debug-symbols=on pch=off \
 	python=%{python2_version} install
 
+%if 0%{?scl:1}
+# Create unversioned symbolic links for libraries - bjam does not do this for prefixed libs
+# Removed RPATH
+for file in $(find $RPM_BUILD_ROOT%{_libdir}/ -name '*.so*'); do
+  ln -s $(basename $file) ${file%%.%{sonamever}}
+  chrpath --delete $file
+done
+%endif
+
 # Override DSO symlink with a linker script.  See the linker script
 # itself for details of why we need to do this.
 [ -f $RPM_BUILD_ROOT%{_libdir}/libboost_thread.so ] # Must be present
 rm -f $RPM_BUILD_ROOT%{_libdir}/libboost_thread.so
 install -p -m 644 $(basename %{SOURCE2}) $RPM_BUILD_ROOT%{_libdir}/
+sed -i -r "s|%{version}|%{sonamever}|g" $RPM_BUILD_ROOT%{_libdir}/$(basename %{SOURCE2})
+
 
 echo ============================= install Boost.Build ==================
 (cd tools/build
@@ -1066,7 +1076,7 @@ rm -rf $RPM_BUILD_ROOT
 %postun wave -p /sbin/ldconfig
 
 %post doctools
-CATALOG=%{_sysconfdir}/xml/catalog
+CATALOG=%{_root_sysconfdir}/xml/catalog
 %{_root_bindir}/xmlcatalog --noout --add "rewriteSystem" \
  "http://www.boost.org/tools/boostbook/dtd" \
  "file://%{_datadir}/boostbook/dtd" $CATALOG
@@ -1083,7 +1093,7 @@ CATALOG=%{_sysconfdir}/xml/catalog
 %postun doctools
 # remove entries only on removal of package
 if [ "$1" = 0 ]; then
-  CATALOG=%{_sysconfdir}/xml/catalog
+  CATALOG=%{_root_sysconfdir}/xml/catalog
   %{_root_bindir}/xmlcatalog --noout --del \
     "file://%{_datadir}/boostbook/dtd" $CATALOG
   %{_root_bindir}/xmlcatalog --noout --del \
@@ -1361,6 +1371,17 @@ fi
 %{_mandir}/man1/bjam.1*
 
 %changelog
+* Wed Apr 6 2016 Marek Skalicky <mskalick@redhat.com> - 1.58.0-16
+- Use better way to prefix libraries major soname with sclname
+
+* Wed Apr 6 2016 Marek Skalicky <mskalick@redhat.com> - 1.58.0-15
+- Libraries major soname prefixed with sclname
+- Removed RPATH from libraries (RHBZ#1323136)
+
+* Wed Apr 6 2016 Marek Skalicky <mskalick@redhat.com> - 1.58.0-14
+- Fixed postun scriptlet (RHBZ#1321958)
+- Added scl prefix to odeint provides (RHBZ#1321956)
+
 * Sun Feb 07 2016 Honza Horak <hhorak@redhat.com> - 1.58.0-13
 - Fixed postun xmlcatalog location
 
