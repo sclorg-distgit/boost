@@ -1,92 +1,76 @@
-%{?scl:%scl_package %{?scl_prefix}boost}
+%{?scl:%scl_package boost}
 %{!?scl:%global pkg_name %{name}}
 
 # Support for documentation installation As the %%doc macro erases the
-# target directory ($RPM_BUILD_ROOT%%{_docdir}/%%{name}), manually
+# target directory ($RPM_BUILD_ROOT%%{_docdir}/%%{pkg_name}), manually
 # installed documentation must be saved into a temporary dedicated
 # directory.
 # XXX note that as of rpm 4.9.1, this shouldn't be necessary anymore.
 # We should be able to install directly.
-%define boost_docdir __tmp_docdir
-%define boost_examplesdir __tmp_examplesdir
+%global boost_docdir __tmp_docdir
+%global boost_examplesdir __tmp_examplesdir
 
-%ifarch ppc64le
-  %bcond_with mpich
-%else
-%if 0%{?scl:1}
-  %bcond_with mpich
-%else
-  %bcond_without mpich
-%endif
-%endif
-
-%ifarch s390 s390x ppc64le
-  # No OpenMPI support on these arches
-  %bcond_with openmpi
-%else
-%if 0%{?scl:1}
-  # No OpenMPI in SCLs
-  %bcond_with openmpi
-%else
-  %bcond_without openmpi
-%endif
-%endif
-
-%ifnarch %{ix86} x86_64 %{arm} ppc64 ppc64le aarch64
-  %bcond_with context
-%else
-  %bcond_without context
-%endif
-
+# Not needed in SCLs
+%bcond_with mpich
+%bcond_with openmpi
+%bcond_with context
 %bcond_with python3
+%ifnarch %{ix86} x86_64
+  %bcond_with quadmath
+%else
+  %bcond_without quadmath
+%endif
 
 Name: %{?scl_prefix}boost
 Summary: The free peer-reviewed portable C++ source libraries
-Version: 1.58.0
-%define version_enc 1_58_0
-Release: 16%{?dist}
+Version: 1.60.0
+%global version_enc 1_60_0
+Release: 1%{?dist}
 License: Boost and MIT and Python
 
-%define toplev_dirname boost_%{version_enc}
+%global toplev_dirname %{pkg_name}_%{version_enc}
 URL: http://www.boost.org
 Group: System Environment/Libraries
 
-Source0: http://downloads.sourceforge.net/boost/%{toplev_dirname}.tar.bz2
+Source0: http://downloads.sourceforge.net/%{pkg_name}/%{toplev_dirname}.tar.bz2
 Source1: ver.py
 Source2: libboost_thread.so
 
 # Since Fedora 13, the Boost libraries are delivered with sonames
 # equal to the Boost version (e.g., 1.41.0).
-%define sonamever %{?scl_prefix}%{version}
+%global sonamever %{?scl_prefix}%{version}
 
 # boost is an "umbrella" package that pulls in all other boost
 # components, except for MPI and Python 3 sub-packages.  Those are
 # special in that they are rarely necessary, and it's not a big burden
 # to have interested parties install them explicitly.
-Requires: %{name}-atomic%{?_isa} = %{version}-%{release}
-Requires: %{name}-chrono%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-atomic%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-chrono%{?_isa} = %{version}-%{release}
 %if %{with context}
-Requires: %{name}-context%{?_isa} = %{version}-%{release}
-Requires: %{name}-coroutine%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-context%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-coroutine%{?_isa} = %{version}-%{release}
 %endif
-Requires: %{name}-date-time%{?_isa} = %{version}-%{release}
-Requires: %{name}-filesystem%{?_isa} = %{version}-%{release}
-Requires: %{name}-graph%{?_isa} = %{version}-%{release}
-Requires: %{name}-iostreams%{?_isa} = %{version}-%{release}
-Requires: %{name}-locale%{?_isa} = %{version}-%{release}
-Requires: %{name}-log%{?_isa} = %{version}-%{release}
-Requires: %{name}-math%{?_isa} = %{version}-%{release}
-Requires: %{name}-program-options%{?_isa} = %{version}-%{release}
-Requires: %{name}-python%{?_isa} = %{version}-%{release}
-Requires: %{name}-random%{?_isa} = %{version}-%{release}
-Requires: %{name}-regex%{?_isa} = %{version}-%{release}
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-Requires: %{name}-signals%{?_isa} = %{version}-%{release}
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-Requires: %{name}-test%{?_isa} = %{version}-%{release}
-Requires: %{name}-thread%{?_isa} = %{version}-%{release}
-Requires: %{name}-timer%{?_isa} = %{version}-%{release}
-Requires: %{name}-wave%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-date-time%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-filesystem%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-graph%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-iostreams%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-locale%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-log%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-math%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-program-options%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-python%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-random%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-regex%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-signals%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-test%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-thread%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-timer%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-type_erasure%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-wave%{?_isa} = %{version}-%{release}
+
+%{?scl:Requires: %{scl}-runtime}
 
 BuildRequires: m4
 BuildRequires: libstdc++-devel
@@ -97,6 +81,9 @@ BuildRequires: python-devel
 BuildRequires: python3-devel
 %endif
 BuildRequires: libicu-devel
+%if %{with quadmath}
+BuildRequires: libquadmath-devel
+%endif
 BuildRequires: chrpath
 
 # https://svn.boost.org/trac/boost/ticket/6150
@@ -117,12 +104,6 @@ Patch25: boost-1.57.0-mpl-print.patch
 # https://svn.boost.org/trac/boost/ticket/8870
 Patch36: boost-1.57.0-spirit-unused_typedef.patch
 
-# https://svn.boost.org/trac/boost/ticket/8878
-Patch45: boost-1.54.0-locale-unused_typedef.patch
-
-# https://svn.boost.org/trac/boost/ticket/8888
-Patch49: boost-1.54.0-python-unused_typedef.patch
-
 # https://svn.boost.org/trac/boost/ticket/9038
 Patch51: boost-1.58.0-pool-test_linking.patch
 
@@ -134,27 +115,28 @@ Patch63: boost-1.55.0-python-test-PyImport_AppendInittab.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1190039
 Patch65: boost-1.57.0-build-optflags.patch
 
-# https://svn.boost.org/trac/boost/ticket/10510
-Patch66: boost-1.57.0-uuid-comparison.patch
-
-# https://svn.boost.org/trac/boost/ticket/11283
-Patch67: boost-1.58.0-variant-includes.patch
-
 # Prevent gcc.jam from setting -m32 or -m64.
 Patch68: boost-1.58.0-address-model.patch
 
-# https://github.com/boostorg/ublas/pull/25
-Patch69: boost-1.58-ublas-inlines.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1262444
+Patch81: boost-1.59-test-fenv.patch
 
-Patch70: 0001-Changes-required-for-aarch64-support-in-boost-config.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1318383
+Patch82: boost-1.60.0-no-rpath.patch
 
-#http://www.boost.org/patches/1_58_0/0002-Fix-a-regression-with-non-constexpr-types.patch
-Patch80: 0002-Fix-a-regression-with-non-constexpr-types.patch
-# https://bugzilla.redhat.com/show_bug.cgi?id=1294515
-Patch81: boost-1.58-binomial_heap.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1349638
+Patch83: boost-1.60-multiprecision.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1358725
+# https://github.com/boostorg/python/pull/59/files
+Patch84: boost-1.60-python-regptr.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1403165
+Patch85: boost-1.60-asio-use-future.patch
 
 %bcond_with tests
 %bcond_with docs_generated
+
 
 %description
 Boost provides free peer-reviewed portable C++ source libraries.  The
@@ -166,10 +148,12 @@ libraries have already been included in the C++ 2011 standard and
 others have been proposed to the C++ Standards Committee for inclusion
 in future standards.)
 
+
 %package atomic
 Summary: Run-Time component of boost atomic library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
+
 
 %description atomic
 
@@ -178,20 +162,23 @@ types and operations on these data types, as well as memory ordering
 constraints required for coordinating multiple threads through atomic
 variables.
 
+
 %package chrono
 Summary: Run-Time component of boost chrono library
 Group: System Environment/Libraries
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+
 
 %description chrono
 
 Run-Time support for Boost.Chrono, a set of useful time utilities.
 
+
 %package container
 Summary: Run-Time component of boost container library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
+
 
 %description container
 
@@ -201,20 +188,24 @@ features not present in standard containers or to offer the latest
 standard draft features for compilers that comply with C++03.
 
 %if %{with context}
+
 %package context
 Summary: Run-Time component of boost context switching library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
+
 
 %description context
 
 Run-Time support for Boost.Context, a foundational library that
 provides a sort of cooperative multitasking on a single thread.
 
+
 %package coroutine
 Summary: Run-Time component of boost coroutine library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
+
 
 %description coroutine
 Run-Time support for Boost.Coroutine, a library that provides
@@ -223,21 +214,24 @@ suspending and resuming execution.
 
 %endif
 
+
 %package date-time
 Summary: Run-Time component of boost date-time library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description date-time
 
-Run-Time support for Boost Date Time, set of date-time libraries based
+Run-Time support for Boost Date Time, a set of date-time libraries based
 on generic programming concepts.
+
 
 %package filesystem
 Summary: Run-Time component of boost filesystem library
 Group: System Environment/Libraries
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+
 
 %description filesystem
 
@@ -245,11 +239,12 @@ Run-Time support for the Boost Filesystem Library, which provides
 portable facilities to query and manipulate paths, files, and
 directories.
 
+
 %package graph
 Summary: Run-Time component of boost graph library
 Group: System Environment/Libraries
-Requires: %{name}-regex%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-regex%{?_isa} = %{version}-%{release}
+
 
 %description graph
 
@@ -257,33 +252,44 @@ Run-Time support for the BGL graph library.  BGL interface and graph
 components are generic, in the same sense as the the Standard Template
 Library (STL).
 
+
 %package iostreams
 Summary: Run-Time component of boost iostreams library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
+
 
 %description iostreams
 
 Run-Time support for Boost.IOStreams, a framework for defining streams,
 stream buffers and i/o filters.
 
+
 %package locale
 Summary: Run-Time component of boost locale library
 Group: System Environment/Libraries
-Requires: %{name}-chrono%{?_isa} = %{version}-%{release}
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-Requires: %{name}-thread%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-chrono%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-thread%{?_isa} = %{version}-%{release}
+
 
 %description locale
 
 Run-Time support for Boost.Locale, a set of localization and Unicode
 handling tools.
 
+
 %package log
 Summary: Run-Time component of boost logging library
 Group: System Environment/Libraries
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-atomic = %{version}-%{release}
+Requires: %{?scl_prefix}boost-chrono = %{version}-%{release}
+Requires: %{?scl_prefix}boost-date-time = %{version}-%{release}
+Requires: %{?scl_prefix}boost-filesystem = %{version}-%{release}
+Requires: %{?scl_prefix}boost-regex = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system = %{version}-%{release}
+Requires: %{?scl_prefix}boost-thread = %{version}-%{release}
+
 
 %description log
 
@@ -291,62 +297,73 @@ Boost.Log library aims to make logging significantly easier for the
 application developer.  It provides a wide range of out-of-the-box
 tools along with public interfaces for extending the library.
 
+
 %package math
 Summary: Math functions for boost TR1 library
 Group: System Environment/Libraries
+%if %{with quadmath}
+Requires: libquadmath%{?_isa}
+%endif
 %{?scl:Requires:%scl_runtime}
+
 
 %description math
 
-Run-Time support for C99 and C++ TR1 C-style Functions from math
+Run-Time support for C99 and C++ TR1 C-style Functions from the math
 portion of Boost.TR1.
+
 
 %package program-options
 Summary:  Run-Time component of boost program_options library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description program-options
 
 Run-Time support of boost program options library, which allows program
 developers to obtain (name, value) pairs from the user, via
-conventional methods such as command line and configuration file.
+conventional methods such as command-line and configuration file.
+
 
 %package python
 Summary: Run-Time component of boost python library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description python
 
 The Boost Python Library is a framework for interfacing Python and
-C++. It allows you to quickly and seamlessly expose C++ classes
+C++. It allows you to quickly and seamlessly expose C++ classes,
 functions and objects to Python, and vice versa, using no special
 tools -- just your C++ compiler.  This package contains run-time
 support for Boost Python Library.
 
 %if %{with python3}
 
+
 %package python3
 Summary: Run-Time component of boost python library for Python 3
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description python3
 
 The Boost Python Library is a framework for interfacing Python and
-C++. It allows you to quickly and seamlessly expose C++ classes
+C++. It allows you to quickly and seamlessly expose C++ classes,
 functions and objects to Python, and vice versa, using no special
 tools -- just your C++ compiler.  This package contains run-time
 support for Boost Python Library compiled for Python 3.
 
+
 %package python3-devel
 Summary: Shared object symbolic links for Boost.Python 3
 Group: System Environment/Libraries
-Requires: %{name}-python3%{?_isa} = %{version}-%{release}
-Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-python3%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-devel%{?_isa} = %{version}-%{release}
+
 
 %description python3-devel
 
@@ -354,68 +371,81 @@ Shared object symbolic links for Python 3 variant of Boost.Python.
 
 %endif
 
+
 %package random
 Summary: Run-Time component of boost random library
 Group: System Environment/Libraries
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-system = %{version}-%{release}
+
 
 %description random
 
 Run-Time support for boost random library.
+
 
 %package regex
 Summary: Run-Time component of boost regular expression library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description regex
 
 Run-Time support for boost regular expression library.
+
 
 %package serialization
 Summary: Run-Time component of boost serialization library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description serialization
 
 Run-Time support for serialization for persistence and marshaling.
+
 
 %package signals
 Summary: Run-Time component of boost signals and slots library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description signals
 
 Run-Time support for managed signals & slots callback implementation.
+
 
 %package system
 Summary: Run-Time component of boost system support library
 Group: System Environment/Libraries
 %{?scl:Requires:%scl_runtime}
 
+
 %description system
 
 Run-Time component of Boost operating system support library, including
-the diagnostics support that will be part of the C++0x standard
-library.
+the diagnostics support that is part of the C++11 standard library.
+
 
 %package test
 Summary: Run-Time component of boost test library
 Group: System Environment/Libraries
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-system = %{version}-%{release}
+Requires: %{?scl_prefix}boost-timer = %{version}-%{release}
+
 
 %description test
 
 Run-Time support for simple program testing, full unit testing, and for
 program execution monitoring.
 
+
 %package thread
 Summary: Run-Time component of boost thread library
 Group: System Environment/Libraries
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+
 
 %description thread
 
@@ -424,12 +454,13 @@ functions for managing multiple threads of execution, and for
 synchronizing data between the threads or providing separate copies of
 data specific to individual threads.
 
+
 %package timer
 Summary: Run-Time component of boost timer library
 Group: System Environment/Libraries
-Requires: %{name}-chrono%{?_isa} = %{version}-%{release}
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-chrono%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+
 
 %description timer
 
@@ -437,15 +468,30 @@ Requires: %{name}-system%{?_isa} = %{version}-%{release}
 The Boost Timer library answers that question and does so portably,
 with as little as one #include and one additional line of code.
 
+
+%package type_erasure
+Summary: Run-Time component of boost type erasure library
+Group: System Environment/Libraries
+Requires: %{?scl_prefix}boost-chrono%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-thread = %{version}-%{release}
+
+
+%description type_erasure
+
+The Boost.TypeErasure library provides runtime polymorphism in C++
+that is more flexible than that provided by the core language.
+
+
 %package wave
 Summary: Run-Time component of boost C99/C++ pre-processing library
 Group: System Environment/Libraries
-Requires: %{name}-chrono%{?_isa} = %{version}-%{release}
-Requires: %{name}-date-time%{?_isa} = %{version}-%{release}
-Requires: %{name}-filesystem%{?_isa} = %{version}-%{release}
-Requires: %{name}-system%{?_isa} = %{version}-%{release}
-Requires: %{name}-thread%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-chrono%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-date-time%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-filesystem%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-thread%{?_isa} = %{version}-%{release}
+
 
 %description wave
 
@@ -453,13 +499,39 @@ Run-Time support for the Boost.Wave library, a Standards conforming,
 and highly configurable implementation of the mandated C99/C++
 pre-processor functionality.
 
+
 %package devel
 Summary: The Boost C++ headers and shared development libraries
 Group: Development/Libraries
-Requires: %{name}%{?_isa} = %{version}-%{release}
-Provides: %{name}-python-devel
+Requires: %{?scl_prefix}boost%{?_isa} = %{version}-%{release}
+Provides: %{?scl_prefix}boost-python-devel
 Requires: libicu-devel%{?_isa}
-%{?scl:Requires:%scl_runtime}
+%if %{with quadmath}
+Requires: libquadmath-devel%{?_isa}
+%endif
+
+Requires: %{?scl_prefix}boost-atomic = %{version}-%{release}
+Requires: %{?scl_prefix}boost-chrono = %{version}-%{release}
+Requires: %{?scl_prefix}boost-container = %{version}-%{release}
+Requires: %{?scl_prefix}boost-date-time = %{version}-%{release}
+Requires: %{?scl_prefix}boost-filesystem = %{version}-%{release}
+Requires: %{?scl_prefix}boost-graph = %{version}-%{release}
+Requires: %{?scl_prefix}boost-iostreams = %{version}-%{release}
+Requires: %{?scl_prefix}boost-locale = %{version}-%{release}
+Requires: %{?scl_prefix}boost-log = %{version}-%{release}
+Requires: %{?scl_prefix}boost-math = %{version}-%{release}
+Requires: %{?scl_prefix}boost-program-options = %{version}-%{release}
+Requires: %{?scl_prefix}boost-python = %{version}-%{release}
+Requires: %{?scl_prefix}boost-random = %{version}-%{release}
+Requires: %{?scl_prefix}boost-regex = %{version}-%{release}
+Requires: %{?scl_prefix}boost-serialization = %{version}-%{release}
+Requires: %{?scl_prefix}boost-signals = %{version}-%{release}
+Requires: %{?scl_prefix}boost-system = %{version}-%{release}
+Requires: %{?scl_prefix}boost-test = %{version}-%{release}
+Requires: %{?scl_prefix}boost-timer = %{version}-%{release}
+Requires: %{?scl_prefix}boost-type_erasure = %{version}-%{release}
+Requires: %{?scl_prefix}boost-type_erasure = %{version}-%{release}
+Requires: %{?scl_prefix}boost-wave = %{version}-%{release}
 
 # Odeint was shipped in Fedora 18, but later became part of Boost.
 # Note we also obsolete odeint-doc down there.
@@ -469,19 +541,22 @@ Obsoletes: %{?scl_prefix}odeint < 2.2-5
 Provides: %{?scl_prefix}odeint-devel = 2.2-5
 Obsoletes: %{?scl_prefix}odeint-devel < 2.2-5
 
+
 %description devel
 Headers and shared object symbolic links for the Boost C++ libraries.
+
 
 %package static
 Summary: The Boost C++ static development libraries
 Group: Development/Libraries
-Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-Obsoletes: %{name}-devel-static < 1.34.1-14
-Provides: %{name}-devel-static = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-devel%{?_isa} = %{version}-%{release}
+Obsoletes: %{?scl_prefix}boost-devel-static < 1.34.1-14
+Provides: %{?scl_prefix}boost-devel-static = %{version}-%{release}
+
 
 %description static
 Static Boost C++ libraries.
+
 
 %package doc
 Summary: HTML documentation for the Boost C++ libraries
@@ -489,17 +564,18 @@ Group: Documentation
 %if 0%{?rhel} >= 6
 BuildArch: noarch
 %endif
-Provides: %{name}-python-docs = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Provides: %{?scl_prefix}boost-python-docs = %{version}-%{release}
 
 # See the description above.
 Provides: %{?scl_prefix}odeint-doc = 2.2-5
 Obsoletes: %{?scl_prefix}odeint-doc < 2.2-5
 
+
 %description doc
 This package contains the documentation in the HTML format of the Boost C++
 libraries. The documentation provides the same content as that on the Boost
 web page (http://www.boost.org/doc/libs/1_40_0).
+
 
 %package examples
 Summary: Source examples for the Boost C++ libraries
@@ -507,8 +583,8 @@ Group: Documentation
 %if 0%{?rhel} >= 6
 BuildArch: noarch
 %endif
-Requires: %{name}-devel = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-devel = %{version}-%{release}
+
 
 %description examples
 This package contains example source files distributed with boost.
@@ -516,51 +592,55 @@ This package contains example source files distributed with boost.
 
 %if %{with openmpi}
 
+
 %package openmpi
 Summary: Run-Time component of Boost.MPI library
 Group: System Environment/Libraries
 BuildRequires: openmpi-devel
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+
 
 %description openmpi
 
 Run-Time support for Boost.MPI-OpenMPI, a library providing a clean C++
 API over the OpenMPI implementation of MPI.
 
+
 %package openmpi-devel
 Summary: Shared library symbolic links for Boost.MPI
 Group: System Environment/Libraries
-Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
-Requires: %{name}-openmpi-python%{?_isa} = %{version}-%{release}
-Requires: %{name}-graph-openmpi%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-devel%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-openmpi%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-openmpi-python%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-graph-openmpi%{?_isa} = %{version}-%{release}
+
 
 %description openmpi-devel
 
 Devel package for Boost.MPI-OpenMPI, a library providing a clean C++
 API over the OpenMPI implementation of MPI.
 
+
 %package openmpi-python
 Summary: Python run-time component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
-Requires: %{name}-python%{?_isa} = %{version}-%{release}
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-openmpi%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-python%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+
 
 %description openmpi-python
 
 Python support for Boost.MPI-OpenMPI, a library providing a clean C++
 API over the OpenMPI implementation of MPI.
 
+
 %package graph-openmpi
 Summary: Run-Time component of parallel boost graph library
 Group: System Environment/Libraries
-Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-openmpi%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+
 
 %description graph-openmpi
 
@@ -574,59 +654,63 @@ back-end to do the parallel work.
 
 %if %{with mpich}
 
+
 %package mpich
 Summary: Run-Time component of Boost.MPI library
 Group: System Environment/Libraries
 BuildRequires: mpich-devel
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-Provides: %{name}-mpich2 = %{version}-%{release}
-Obsoletes: %{name}-mpich2 < 1.53.0-9
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+Provides: %{?scl_prefix}boost-mpich2 = %{version}-%{release}
+Obsoletes: %{?scl_prefix}boost-mpich2 < 1.53.0-9
+
 
 %description mpich
 
 Run-Time support for Boost.MPI-MPICH, a library providing a clean C++
 API over the MPICH implementation of MPI.
 
+
 %package mpich-devel
 Summary: Shared library symbolic links for Boost.MPI
 Group: System Environment/Libraries
-Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
-Requires: %{name}-mpich-python%{?_isa} = %{version}-%{release}
-Requires: %{name}-graph-mpich%{?_isa} = %{version}-%{release}
-Provides: %{name}-mpich2-devel = %{version}-%{release}
-Obsoletes: %{name}-mpich2-devel < 1.53.0-9
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-devel%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-mpich%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-mpich-python%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-graph-mpich%{?_isa} = %{version}-%{release}
+Provides: %{?scl_prefix}boost-mpich2-devel = %{version}-%{release}
+Obsoletes: %{?scl_prefix}boost-mpich2-devel < 1.53.0-9
+
 
 %description mpich-devel
 
 Devel package for Boost.MPI-MPICH, a library providing a clean C++
 API over the MPICH implementation of MPI.
 
+
 %package mpich-python
 Summary: Python run-time component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
-Requires: %{name}-python%{?_isa} = %{version}-%{release}
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-Provides: %{name}-mpich2-python = %{version}-%{release}
-Obsoletes: %{name}-mpich2-python < 1.53.0-9
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-mpich%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-python%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+Provides: %{?scl_prefix}boost-mpich2-python = %{version}-%{release}
+Obsoletes: %{?scl_prefix}boost-mpich2-python < 1.53.0-9
+
 
 %description mpich-python
 
 Python support for Boost.MPI-MPICH, a library providing a clean C++
 API over the MPICH implementation of MPI.
 
+
 %package graph-mpich
 Summary: Run-Time component of parallel boost graph library
 Group: System Environment/Libraries
-Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
-Requires: %{name}-serialization%{?_isa} = %{version}-%{release}
-Provides: %{name}-graph-mpich2 = %{version}-%{release}
-Obsoletes: %{name}-graph-mpich2 < 1.53.0-9
-%{?scl:Requires:%scl_runtime}
+Requires: %{?scl_prefix}boost-mpich%{?_isa} = %{version}-%{release}
+Requires: %{?scl_prefix}boost-serialization%{?_isa} = %{version}-%{release}
+Provides: %{?scl_prefix}boost-graph-mpich2 = %{version}-%{release}
+Obsoletes: %{?scl_prefix}boost-graph-mpich2 < 1.53.0-9
+
 
 %description graph-mpich
 
@@ -637,12 +721,13 @@ back-end to do the parallel work.
 
 %endif
 
+
 %package build
 Summary: Cross platform build system for C++ projects
 Group: Development/Tools
-Requires: %{name}-jam
+Requires: %{?scl_prefix}boost-jam
 BuildArch: noarch
-%{?scl:Requires:%scl_runtime}
+
 
 %description build
 Boost.Build is an easy way to build C++ projects, everywhere. You name
@@ -652,6 +737,7 @@ creating static and shared libraries, making pieces of executable, and other
 chores -- whether you're using GCC, MSVC, or a dozen more supported
 C++ compilers -- on Windows, OSX, Linux and commercial UNIX systems.
 
+
 %package doctools
 Summary: Tools for working with Boost documentation
 Group: Applications/Publishing
@@ -659,21 +745,27 @@ Requires: docbook-dtds
 Requires: docbook-style-xsl
 %{?scl:Requires:%scl_runtime}
 
+
 %description doctools
 
 Tools for working with Boost documentation in BoostBook or QuickBook format.
+
 
 %package jam
 Summary: A low-level build tool
 Group: Development/Tools
 %{?scl:Requires:%scl_runtime}
 
+
 %description jam
 Boost.Jam (BJam) is the low-level build engine tool for Boost.Build.
 Historically, Boost.Jam is based on on FTJam and on Perforce Jam but has grown
 a number of significant features and is now developed independently
 
+
 %prep
+%{?scl:scl enable %{scl} - << \SCLEOF}
+set -ex
 %setup -q -n %{toplev_dirname}
 
 %patch4 -p1
@@ -681,20 +773,17 @@ a number of significant features and is now developed independently
 %patch15 -p0
 %patch25 -p1
 %patch36 -p1
-%patch45 -p1
-%patch49 -p1
 %patch51 -p1
 %patch61 -p1
 %patch62 -p1
 %patch63 -p1
 %patch65 -p1
-%patch66 -p2
-%patch67 -p2
 %patch68 -p1
-%patch69 -p2
-%patch70 -p1
-%patch80 -p2
 %patch81 -p2
+%patch82 -p0
+%patch83 -p2
+%patch84 -p2
+%patch85 -p2
 
 # At least python2_version needs to be a macro so that it's visible in
 # %%install as well.
@@ -703,8 +792,12 @@ a number of significant features and is now developed independently
 %global python3_version %(/usr/bin/python3 %{SOURCE1})
 %global python3_abiflags %(/usr/bin/python3-config --abiflags)
 %endif
+%{?scl:SCLEOF}
+
 
 %build
+%{?scl:scl enable %{scl} - << \SCLEOF}
+set -ex
 : PYTHON2_VERSION=%{python2_version}
 %if %{with python3}
 : PYTHON3_VERSION=%{python3_version}
@@ -713,7 +806,8 @@ a number of significant features and is now developed independently
 
 # There are many strict aliasing warnings, and it's not feasible to go
 # through them all at this time.
-export RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing"
+# There are also lots of noisy but harmless unused local typedef warnings.
+export RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-unused-local-typedefs"
 
 cat > ./tools/build/src/user-config.jam << "EOF"
 import os ;
@@ -724,8 +818,7 @@ using gcc : : : <compileflags>$(RPM_OPT_FLAGS) ;
 using mpi ;
 %endif
 %if %{with python3}
-# This _adds_ extra python version.  It doesn't replace whatever
-# python 2.X is default on the system.
+using python : %{python2_version} : /usr/bin/python2 : /usr/include/python%{python2_version} : : : : ;
 using python : %{python3_version} : /usr/bin/python3 : /usr/include/python%{python3_version}%{python3_abiflags} : : : : %{python3_abiflags} ;
 %endif
 EOF
@@ -735,6 +828,7 @@ EOF
 # To prefix soname version with sclname
 # http://lists.boost.org/boost-build/2016/04/28603.php
 sed -i 's|.$(BOOST_VERSION)|.%{?scl_prefix}$(BOOST_VERSION)|g' boostcpp.jam
+
 
 # N.B. When we build the following with PCH, parts of boost (math
 # library in particular) end up being built second time during
@@ -752,7 +846,7 @@ echo ============================= build serial ==================
 ./b2 -d+2 -q %{?_smp_mflags} \
 	--without-mpi --without-graph_parallel --build-dir=serial \
 %if !%{with context}
-	--without-context --without-coroutine \
+	--without-context --without-coroutine --without-coroutine2 \
 %endif
 	variant=release threading=multi debug-symbols=on pch=off \
 	python=%{python2_version} stage
@@ -805,12 +899,20 @@ export PATH=/bin${PATH:+:}$PATH
 echo ============================= build Boost.Build ==================
 (cd tools/build
  ./bootstrap.sh --with-toolset=gcc)
+%{?scl:SCLEOF}
+
 
 %check
+%{?scl:scl enable %{scl} - << \SCLEOF}
+set -ex
 :
+
+%{?scl:SCLEOF}
 
 
 %install
+%{?scl:scl enable %{scl} - << \SCLEOF}
+set -ex
 rm -rf $RPM_BUILD_ROOT
 cd %{_builddir}/%{toplev_dirname}
 
@@ -858,7 +960,7 @@ echo ============================= install serial ==================
 ./b2 -d+2 -q %{?_smp_mflags} \
 	--without-mpi --without-graph_parallel --build-dir=serial \
 %if !%{with context}
-	--without-context --without-coroutine \
+	--without-context --without-coroutine --without-coroutine2 \
 %endif
 	--prefix=$RPM_BUILD_ROOT%{_prefix} \
 	--libdir=$RPM_BUILD_ROOT%{_libdir} \
@@ -880,7 +982,6 @@ done
 rm -f $RPM_BUILD_ROOT%{_libdir}/libboost_thread.so
 install -p -m 644 $(basename %{SOURCE2}) $RPM_BUILD_ROOT%{_libdir}/
 sed -i -r "s|%{version}|%{sonamever}|g" $RPM_BUILD_ROOT%{_libdir}/$(basename %{SOURCE2})
-
 
 echo ============================= install Boost.Build ==================
 (cd tools/build
@@ -913,7 +1014,7 @@ echo ============================= install Boost.QuickBook ==================
 
 # Install documentation files (HTML pages) within the temporary place
 echo ============================= install documentation ==================
-# Prepare the place to temporary store the generated documentation
+# Prepare the place to temporarily store the generated documentation
 rm -rf %{boost_docdir} && %{__mkdir_p} %{boost_docdir}/html
 DOCPATH=%{boost_docdir}
 DOCREGEX='.*\.\(html?\|css\|png\|gif\)'
@@ -926,8 +1027,8 @@ sed "s:^:$DOCPATH/:" tmp-doc-directories \
     | xargs -P 0 --no-run-if-empty %{__install} -d
 
 cat tmp-doc-directories | while read tobeinstalleddocdir; do
-    find $tobeinstalleddocdir -mindepth 1 -maxdepth 1 -regex $DOCREGEX \
-    | xargs -P 0 %{__install} -p -m 644 -t $DOCPATH/$tobeinstalleddocdir
+    find $tobeinstalleddocdir -mindepth 1 -maxdepth 1 -regex $DOCREGEX -print0 \
+    | xargs -P 0 -0 %{__install} -p -m 644 -t $DOCPATH/$tobeinstalleddocdir
 done
 rm -f tmp-doc-directories
 %{__install} -p -m 644 -t $DOCPATH LICENSE_1_0.txt index.htm index.html boost.png rst.css boost.css
@@ -937,8 +1038,7 @@ echo ============================= install examples ==================
 sed -i -e 's/\r//g' libs/geometry/example/ml02_distance_strategy.cpp
 for tmp_doc_file in flyweight/example/Jamfile.v2 \
  format/example/sample_new_features.cpp multi_index/example/Jamfile.v2 \
- multi_index/example/hashed.cpp serialization/example/demo_output.txt \
- test/example/cla/wide_string.cpp
+ multi_index/example/hashed.cpp serialization/example/demo_output.txt
 do
   mv libs/${tmp_doc_file} libs/${tmp_doc_file}.iso8859
   iconv -f ISO8859-1 -t UTF8 < libs/${tmp_doc_file}.iso8859 > libs/${tmp_doc_file}
@@ -946,7 +1046,7 @@ do
   rm -f libs/${tmp_doc_file}.iso8859
 done
 
-# Prepare the place to temporary store the examples
+# Prepare the place to temporarily store the examples
 rm -rf %{boost_examplesdir} && mkdir -p %{boost_examplesdir}/html
 EXAMPLESPATH=%{boost_examplesdir}
 find libs -type d -name example -exec find {} -type f \; \
@@ -971,10 +1071,15 @@ done
 rm -f tmp-doc-files-to-be-installed
 rm -f tmp-doc-directories
 %{__install} -p -m 644 -t $EXAMPLESPATH LICENSE_1_0.txt
+%{?scl:SCLEOF}
+
 
 %clean
+%{?scl:scl enable %{scl} - << \SCLEOF}
+set -e
 rm -rf $RPM_BUILD_ROOT
 
+%{?scl:SCLEOF}
 
 # MPI subpackages don't need the ldconfig magic.  They are hidden by
 # default, in MPI back-end-specific directory, and only show to the
@@ -1071,6 +1176,10 @@ rm -rf $RPM_BUILD_ROOT
 
 %postun timer -p /sbin/ldconfig
 
+%post type_erasure -p /sbin/ldconfig
+
+%postun type_erasure -p /sbin/ldconfig
+
 %post wave -p /sbin/ldconfig
 
 %postun wave -p /sbin/ldconfig
@@ -1102,72 +1211,71 @@ fi
 
 
 %files
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
+
 
 %files atomic
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_atomic.so.%{sonamever}
 
+
 %files chrono
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_chrono.so.%{sonamever}
 
+
 %files container
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_container.so.%{sonamever}
 
 %if %{with context}
 
+
 %files context
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_context.so.%{sonamever}
 
+
 %files coroutine
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_coroutine.so.%{sonamever}
 
 %endif
 
+
 %files date-time
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_date_time.so.%{sonamever}
 
+
 %files filesystem
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_filesystem.so.%{sonamever}
 
+
 %files graph
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_graph.so.%{sonamever}
 
+
 %files iostreams
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_iostreams.so.%{sonamever}
 
+
 %files locale
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_locale.so.%{sonamever}
 
+
 %files log
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_log.so.%{sonamever}
 %{_libdir}/libboost_log_setup.so.%{sonamever}
 
+
 %files math
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_math_c99.so.%{sonamever}
 %{_libdir}/libboost_math_c99f.so.%{sonamever}
 %{_libdir}/libboost_math_c99l.so.%{sonamever}
@@ -1175,86 +1283,91 @@ fi
 %{_libdir}/libboost_math_tr1f.so.%{sonamever}
 %{_libdir}/libboost_math_tr1l.so.%{sonamever}
 
+
 %files test
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_prg_exec_monitor.so.%{sonamever}
 %{_libdir}/libboost_unit_test_framework.so.%{sonamever}
 
+
 %files program-options
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_program_options.so.%{sonamever}
 
+
 %files python
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_python.so.%{sonamever}
 
 %if %{with python3}
+
 %files python3
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_python3.so.%{sonamever}
 
+
 %files python3-devel
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_python3.so
 %endif
 
+
 %files random
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_random.so.%{sonamever}
 
+
 %files regex
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_regex.so.%{sonamever}
 
+
 %files serialization
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_serialization.so.%{sonamever}
 %{_libdir}/libboost_wserialization.so.%{sonamever}
 
+
 %files signals
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_signals.so.%{sonamever}
 
+
 %files system
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_system.so.%{sonamever}
 
+
 %files thread
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_thread.so.%{sonamever}
 
+
 %files timer
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_timer.so.%{sonamever}
 
+
+%files type_erasure
+%license LICENSE_1_0.txt
+%{_libdir}/libboost_type_erasure.so.%{sonamever}
+
+
 %files wave
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/libboost_wave.so.%{sonamever}
 
+
 %files doc
-%defattr(-, root, root, -)
 %doc %{boost_docdir}/*
 
+
 %files examples
-%defattr(-, root, root, -)
 %doc %{boost_examplesdir}/*
 
+
 %files devel
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_includedir}/%{pkg_name}
 %{_libdir}/libboost_atomic.so
 %{_libdir}/libboost_chrono.so
@@ -1288,11 +1401,12 @@ fi
 %{_libdir}/libboost_system.so
 %{_libdir}/libboost_thread.so
 %{_libdir}/libboost_timer.so
+%{_libdir}/libboost_type_erasure.so
 %{_libdir}/libboost_wave.so
 
+
 %files static
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/*.a
 %if %{with mpich}
 %{_libdir}/mpich/lib/*.a
@@ -1304,25 +1418,25 @@ fi
 # OpenMPI packages
 %if %{with openmpi}
 
+
 %files openmpi
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/openmpi/lib/libboost_mpi.so.%{sonamever}
 
+
 %files openmpi-devel
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/openmpi/lib/libboost_*.so
 
+
 %files openmpi-python
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/openmpi/lib/libboost_mpi_python.so.%{sonamever}
 %{_libdir}/openmpi/lib/mpi.so
 
+
 %files graph-openmpi
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/openmpi/lib/libboost_graph_parallel.so.%{sonamever}
 
 %endif
@@ -1330,47 +1444,51 @@ fi
 # MPICH packages
 %if %{with mpich}
 
+
 %files mpich
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/mpich/lib/libboost_mpi.so.%{sonamever}
 
+
 %files mpich-devel
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/mpich/lib/libboost_*.so
 
+
 %files mpich-python
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/mpich/lib/libboost_mpi_python.so.%{sonamever}
 %{_libdir}/mpich/lib/mpi.so
 
+
 %files graph-mpich
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_libdir}/mpich/lib/libboost_graph_parallel.so.%{sonamever}
 
 %endif
 
+
 %files build
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_datadir}/boost-build/
 
+
 %files doctools
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_bindir}/quickbook
 %{_datadir}/boostbook/
 
+
 %files jam
-%defattr(-, root, root, -)
-%doc LICENSE_1_0.txt
+%license LICENSE_1_0.txt
 %{_bindir}/bjam
 %{_mandir}/man1/bjam.1*
 
+
 %changelog
+* Tue Jun 13 2017 Marek Skalický <mskalick@redhat.com> - 1.60.0-1
+- Rebase to version 1.60.0 from Fedora 25 and convert it to SCL
+
 * Wed Apr 6 2016 Marek Skalicky <mskalick@redhat.com> - 1.58.0-16
 - Use better way to prefix libraries major soname with sclname
 
