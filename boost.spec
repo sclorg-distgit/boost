@@ -15,17 +15,27 @@
 %bcond_with openmpi
 %bcond_with context
 %bcond_with python3
+
 %ifnarch %{ix86} x86_64
   %bcond_with quadmath
 %else
-  %bcond_without quadmath
+  %if 0%{?rhel} <= 6
+    # gcc in RHEL6 does not provide libquadmath on all architectures
+    %bcond_with quadmath
+  %else
+    %bcond_without quadmath
+  %endif
 %endif
+
+# Disable container library (not used by mongodb SCL)
+# - it contains typedef redefinition which fails with gcc 4.4 in RHEL6
+%bcond_with container
 
 Name: %{?scl_prefix}boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.60.0
 %global version_enc 1_60_0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: Boost and MIT and Python
 
 %global toplev_dirname %{pkg_name}_%{version_enc}
@@ -173,7 +183,7 @@ Requires: %{?scl_prefix}boost-system%{?_isa} = %{version}-%{release}
 
 Run-Time support for Boost.Chrono, a set of useful time utilities.
 
-
+%if %{with container}
 %package container
 Summary: Run-Time component of boost container library
 Group: System Environment/Libraries
@@ -186,6 +196,7 @@ Boost.Container library implements several well-known containers,
 including STL containers. The aim of the library is to offers advanced
 features not present in standard containers or to offer the latest
 standard draft features for compilers that comply with C++03.
+%endif
 
 %if %{with context}
 
@@ -512,7 +523,9 @@ Requires: libquadmath-devel%{?_isa}
 
 Requires: %{?scl_prefix}boost-atomic = %{version}-%{release}
 Requires: %{?scl_prefix}boost-chrono = %{version}-%{release}
+%if %{with container}
 Requires: %{?scl_prefix}boost-container = %{version}-%{release}
+%endif
 Requires: %{?scl_prefix}boost-date-time = %{version}-%{release}
 Requires: %{?scl_prefix}boost-filesystem = %{version}-%{release}
 Requires: %{?scl_prefix}boost-graph = %{version}-%{release}
@@ -848,6 +861,9 @@ echo ============================= build serial ==================
 %if !%{with context}
 	--without-context --without-coroutine --without-coroutine2 \
 %endif
+%if !%{with container}
+	--without-container \
+%endif
 	variant=release threading=multi debug-symbols=on pch=off \
 	python=%{python2_version} stage
 
@@ -961,6 +977,9 @@ echo ============================= install serial ==================
 	--without-mpi --without-graph_parallel --build-dir=serial \
 %if !%{with context}
 	--without-context --without-coroutine --without-coroutine2 \
+%endif
+%if !%{with container}
+	--without-container \
 %endif
 	--prefix=$RPM_BUILD_ROOT%{_prefix} \
 	--libdir=$RPM_BUILD_ROOT%{_libdir} \
@@ -1094,9 +1113,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %postun chrono -p /sbin/ldconfig
 
+%if %{with container}
 %post container -p /sbin/ldconfig
 
 %postun container -p /sbin/ldconfig
+%endif
 
 %if %{with context}
 %post context -p /sbin/ldconfig
@@ -1209,7 +1230,7 @@ if [ "$1" = 0 ]; then
     "file://%{_datadir}/boostbook/xsl" $CATALOG
 fi
 
-
+%{!?_licensedir:%global license %%doc}
 %files
 %license LICENSE_1_0.txt
 
@@ -1224,13 +1245,13 @@ fi
 %{_libdir}/libboost_chrono.so.%{sonamever}
 
 
+%if %{with container}
 %files container
 %license LICENSE_1_0.txt
 %{_libdir}/libboost_container.so.%{sonamever}
+%endif
 
 %if %{with context}
-
-
 %files context
 %license LICENSE_1_0.txt
 %{_libdir}/libboost_context.so.%{sonamever}
@@ -1371,7 +1392,9 @@ fi
 %{_includedir}/%{pkg_name}
 %{_libdir}/libboost_atomic.so
 %{_libdir}/libboost_chrono.so
+%if %{with container}
 %{_libdir}/libboost_container.so
+%endif
 %if %{with context}
 %{_libdir}/libboost_context.so
 %{_libdir}/libboost_coroutine.so
@@ -1486,6 +1509,11 @@ fi
 
 
 %changelog
+* Mon Jun 19 2017 Marek Skalický <mskalick@redhat.com> - 1.60.0-2
+- disable using libquadmath (gcc in RHEL6 does not provide)
+- Disable container library - it contains typedef redefinition
+  which fails with gcc 4.4 in RHEL6
+
 * Tue Jun 13 2017 Marek Skalický <mskalick@redhat.com> - 1.60.0-1
 - Rebase to version 1.60.0 from Fedora 25 and convert it to SCL
 
